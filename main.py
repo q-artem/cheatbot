@@ -7,6 +7,8 @@ from telebot import types
 
 bot = telebot.TeleBot('6526631273:AAGSRuAdGfHE14VlDgRSz_ItXLnucj4S9gE')
 
+separator = "[split]"
+
 hiMess = '''                          ДИС*КЛЕЙ*МЕР
 Этот бот создан исключительно с целью тестирования большим количеством уведомлений за короткий промежуток времени Ваших смарт-часов и фитнес-браслетов. Использование бота в иных целях не предусмотрено. Все совпадения случайны, как и нижеследующий текст. 
 
@@ -25,7 +27,7 @@ def start(message):
     btn4 = types.KeyboardButton('Моего браслета нет в списке')
     markup.add(btn1, btn2, btn3, btn4)
     bot.send_message(message.from_user.id, hiMess, reply_markup=markup, parse_mode='Markdown')
-    bot.send_message(message.from_user.id, "👋 Привет! Я твой бот-помощник! Чтобы выключить меня, напиши \"Здохни\"\nДля перезапуска - /start\nВыбери свой браслет из меню:", reply_markup=markup)
+    bot.send_message(message.from_user.id, f"👋 Привет! Я твой бот-помощник! Чтобы выключить меня, напиши \"Здохни\"\nДля перезапуска - /start\nДля принудительного разбиения текста на уведомления в конкретном месте - {separator}\nВыбери свой браслет из меню:", reply_markup=markup)
 
 maxLenNotification = dict()
 allWatch = {180: 'xiaomi watсh 2 lite', 1023: 'Mi Band 7', 573: 'Amazfit gts 2 mini'}
@@ -40,7 +42,7 @@ def get_text_messages(message):
         return
     if message.text == "Здохни 31415926":
         bot.send_message(message.from_user.id, 'Okk', parse_mode='Markdown')
-        exit()
+        bot.stop_polling()
 
     if message.from_user.id not in maxLenNotification.keys():
         maxLenNotification[message.from_user.id] = list(allWatch.keys())[0]
@@ -63,19 +65,27 @@ def get_text_messages(message):
 
     if firstCall:
         print(maxLenNotification)
-        bot.send_message(message.from_user.id, 'Принято, отправлю через 4 секунды c интервалом 1.5 секунды на браслет ' + allWatch[maxLenNotification[message.from_user.id]], parse_mode='Markdown')
-        time.sleep(3)
+        bot.send_message(message.from_user.id, 'Принято, отправлю через 4 секунды c интервалом 3 секунды на браслет ' + allWatch[maxLenNotification[message.from_user.id]], parse_mode='Markdown')
+        time.sleep(1.5) # пока задержка, досылаются сообщения
         print("Preparing to sending...")
         g = "".join(inputs)
-        while len(g) > maxLenNotification[message.from_user.id]:
-            lst.append(g[0:maxLenNotification[message.from_user.id]])
-            g = g[maxLenNotification[message.from_user.id]:]
+        while len(g) > maxLenNotification[message.from_user.id] or separator in g:
+            if separator in g[0:maxLenNotification[message.from_user.id]]:
+                ind = g[0:maxLenNotification[message.from_user.id]].find(separator)
+                lst.append(g[0:ind])
+                g = g[ind + 7:]
+            else:
+                lst.append(g[0:maxLenNotification[message.from_user.id]])
+                g = g[maxLenNotification[message.from_user.id]:]
         lst.append(g)
         while inputs != []:
             inputs.pop(0)
 
         while len(lst) > 0:
-            time.sleep(1.5)
+            if lst[0] == "":
+                lst.pop(0)
+                continue
+            time.sleep(3)
             print("Sending", lst[0])
             bot.send_message(message.from_user.id, lst[0])
             lst.pop(0)
