@@ -1,9 +1,5 @@
 from aiogram import types
 
-allWatch = {180: 'xiaomi watсh 2 lite',
-            1023: 'Mi Band 7',
-            573: 'Amazfit gts 2 mini'}
-
 keyboards = {"mainMenu": [
     [
         types.KeyboardButton(text="Выбор браслета"),
@@ -11,6 +7,8 @@ keyboards = {"mainMenu": [
     ],
 ], }
 
+ENABLE_PROXY = False
+PROXY_URL = 'http://proxy.server:3128/'
 
 disclaimer = '''⠀                       ДИС<b>КЛЕЙ</b>МЕР
 Этот бот создан исключительно с целью тестирования большим количеством уведомлений за короткий промежуток времени Ваших смарт-часов и фитнес-браслетов. Использование бота в иных целях не предусмотрено. 

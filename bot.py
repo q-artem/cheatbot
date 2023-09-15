@@ -2,6 +2,7 @@ import asyncio
 import logging
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters.command import Command
+from aiogram.client.session.aiohttp import AiohttpSession
 import sqlite3
 
 from aiogram.utils.keyboard import InlineKeyboardBuilder
@@ -14,7 +15,11 @@ from config_reader import config
 # Включаем логирование, чтобы не пропустить важные сообщения
 logging.basicConfig(level=logging.INFO)
 # Объект бота
-bot = Bot(token=config.bot_token.get_secret_value(), parse_mode="HTML")
+if ENABLE_PROXY:
+    session = AiohttpSession(proxy=(PROXY_URL))
+    bot = Bot(token=config.bot_token.get_secret_value(), parse_mode="HTML", session=session)
+else:
+    bot = Bot(token=config.bot_token.get_secret_value(), parse_mode="HTML")
 # Диспетчер
 dp = Dispatcher()
 
@@ -96,7 +101,7 @@ async def message_handler(message: types.Message):
         await message.answer(f'Принято, отправлю {quantity_messages} сообщени{quantity_messages_word} через {seconds_before} секунд{seconds_before_word} c интервалом в {seconds_between} секунд{seconds_between_word}{reverse_word} на браслет ' + await getValueFromId(watch_id, table="watches", fields="name"))
         await asyncio.sleep(2)  # пока задержка, досылаются сообщения
         print("Preparing to sending...")
-        await asyncio.sleep(await getValueFromId(message.from_user.id, fields="timeBeforeSending") - 2)  # пока задержка, досылаются сообщения 
+        await asyncio.sleep(await getValueFromId(message.from_user.id, fields="timeBeforeSending") - 2)  # пока задержка, досылаются сообщения
 
         split_messages = await CutIntoMessages(watch_id, message.from_user.id, separator, inputs[message.from_user.id])
         if reverse:

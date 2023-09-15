@@ -1,2 +1,4 @@
 pydantic-settings
 aiogram
+aiohttp_proxy
+aiohttp-socks
