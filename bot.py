@@ -96,7 +96,7 @@ async def message_handler(message: types.Message):
         await message.answer(f'Принято, отправлю {quantity_messages} сообщени{quantity_messages_word} через {seconds_before} секунд{seconds_before_word} c интервалом в {seconds_between} секунд{seconds_between_word}{reverse_word} на браслет ' + await getValueFromId(watch_id, table="watches", fields="name"))
         await asyncio.sleep(2)  # пока задержка, досылаются сообщения
         print("Preparing to sending...")
-        await asyncio.sleep(await getValueFromId(message.from_user.id, fields="timeBeforeSending") - 2)  # пока задержка, досылаются сообщения
+        await asyncio.sleep(await getValueFromId(message.from_user.id, fields="timeBeforeSending") - 2)  # пока задержка, досылаются сообщения 
 
         split_messages = await CutIntoMessages(watch_id, message.from_user.id, separator, inputs[message.from_user.id])
         if reverse:
