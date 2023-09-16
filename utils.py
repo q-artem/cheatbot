@@ -1,12 +1,22 @@
 from bot import bd
 import sqlite3
+from configs import ENABLE_DEBUG
 
 
-async def getValueFromId(idq, table="users", sign_column="id", fields="*"):  # получение значения из базы
+def debug(*args, sep=' ', end='\n', file=None):
+    if ENABLE_DEBUG:
+        print("->", *args, sep=sep, end=end, file=file)
+        return True
+    else:
+        return False
+
+
+async def get_value_from_id(idq, table="users", sign_column="id", fields="*"):  # получение значения из базы
     try:
         ggdfg = '""'
-        print(f'''SELECT {fields} FROM {table} WHERE {sign_column} = "{str(idq).replace('"', ggdfg)}"''')
-        data = bd.cursor().execute(f'''SELECT {fields} FROM {table} WHERE {sign_column} = "{str(idq).replace('"', ggdfg)}"''').fetchone()
+        debug(f'''SELECT {fields} FROM {table} WHERE {sign_column} = "{str(idq).replace('"', ggdfg)}"''')
+        data = bd.cursor().execute(f'''SELECT {fields} FROM {table} WHERE 
+                                   {sign_column} = "{str(idq).replace('"', ggdfg)}"''').fetchone()
         if fields != "*" and len(fields.split(",")) == 1:
             if data is None:
                 return None
@@ -14,34 +24,33 @@ async def getValueFromId(idq, table="users", sign_column="id", fields="*"):  # �
         else:
             return data
     except BaseException as e:
-        print("In", "getValueFromId", e)
+        debug("In", "getValueFromId", e)
         return False
 
 
-async def writeValueFromId(idq, fields, value, table="users"):  # изменение значения в базе
+async def write_value_from_id(idq, fields, value, table="users"):  # изменение значения в базе
     try:
         data = bd.cursor().execute(f"""UPDATE {table} SET {fields} = {value} WHERE id = {idq}""").fetchone()
         bd.commit()
         return data
     except BaseException as e:
-        print("In", "writeValueFromId", e)
+        debug("In", "writeValueFromId", e)
         return False
 
 
-async def addUser(idq):  # добавление пользователя в базу данных
+async def add_user(idq):  # добавление пользователя в базу данных
     try:
         bd.cursor().execute("""INSERT INTO users (id) VALUES (?)""", (idq,))
         bd.commit()
     except sqlite3.Error as e:
-        print("Ошибка записи в БД")
-        print(e)
+        debug("Ошибка записи в БД:", e)
         return False
-    print("Добавлен новый пользователь, запись в БД завершена")
+    debug("Добавлен новый пользователь, запись в БД завершена")
     return True
 
 
-async def CutIntoMessages(idq, id_user, separator, data):  # разрезаем текст на сообщения по id часов и id юзера
-    max_len = await getValueFromId(idq, fields="maxLengthRussian", table="watches")
+async def cut_into_messages(idq, separator, data):  # разрезаем текст на сообщения по id часов
+    max_len = await get_value_from_id(idq, fields="maxLengthRussian", table="watches")
     lst = []
     while len(data) > max_len or separator in data:
         if separator in data[0:max_len]:
