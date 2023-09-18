@@ -3,7 +3,12 @@ from aiogram import types
 keyboards = {"mainMenu": [
     [
         types.KeyboardButton(text="Выбор браслета"),
-        types.KeyboardButton(text="Настройки")
+        types.KeyboardButton(text="Настройки"),
+    ], [
+        types.KeyboardButton(text="Mi Band 6"),
+        types.KeyboardButton(text="xiaomi watch 2 lite"),
+        types.KeyboardButton(text="Amazfit gts 2 mini"),
+        types.KeyboardButton(text="Mi Band 7"),
     ],
 ], }
 
@@ -25,5 +30,3 @@ hiMess2 = f'''
 ●Если Вам на часы пришли не все уведомления, попробуйте увеличить время между отправкой. Также возможно в памяти помещается меньшее количество, чем было отправлено
 Для начала выбери свой браслет из меню
 '''
-
-
