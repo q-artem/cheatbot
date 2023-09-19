@@ -1,15 +1,17 @@
+import asyncio
 import logging
 from aiogram import Bot, Dispatcher
 from aiogram.filters.command import Command
 from aiogram.client.session.aiohttp import AiohttpSession
-
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiogram import F
 
 from configs import *
-from functions import *
+import global_variables
 from config_reader import config
-import sqlite3
+from utils import get_value_from_id, debug, add_user, write_value_from_id
+from functions import service_block, set_watch, send_cheats, set_settings
+
 
 if ENABLE_PROXY:
     session = AiohttpSession(proxy=PROXY_URL)
@@ -19,11 +21,12 @@ else:
 
 logging.basicConfig(level=logging.INFO)  # Включаем логирование, чтобы не пропустить важные сообщения
 dp = Dispatcher()  # Диспетчер
-bd = sqlite3.connect("users_info.sqlite")  # подключение к бд
-inputs = {}  # сообщения в очереди
 
 
 async def main():  # Запуск процесса поллинга новых апдейтов
+    global_variables.states.update({q[0]: IN_SLEEP_STATE for q in await get_value_from_id(None, fields="id", get_all=True)})
+    debug("users in bd:", (", ".join([str(q) for q in global_variables.states.keys()])))
+    print(global_variables.states)
     await dp.start_polling(bot)
 
 
@@ -39,7 +42,7 @@ async def cmd_start(message: types.Message):
 
 @dp.callback_query(F.data == "agreement_with_the_disclaimer")
 async def send_hi_message(callback: types.CallbackQuery):
-    keyboard = types.ReplyKeyboardMarkup(keyboard=keyboards["mainMenu"], resize_keyboard=True)
+    keyboard = types.ReplyKeyboardMarkup(keyboard=keyboards[IN_SLEEP_STATE], resize_keyboard=True)
     if await get_value_from_id(callback.from_user.id) is None:
         await callback.message.answer(hiMess2, reply_markup=keyboard)  # если первый раз - привет и добавляем
         await add_user(callback.from_user.id)
@@ -66,6 +69,9 @@ async def message_handler(message: types.Message):
         return True
 
     if await set_watch(message):
+        return True
+
+    if await set_settings(message):
         return True
 
     if await send_cheats(message):

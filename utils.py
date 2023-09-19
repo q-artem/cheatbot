@@ -1,6 +1,9 @@
-from bot import bd
 import sqlite3
-from configs import ENABLE_DEBUG
+
+import global_variables
+from configs import *
+
+bd = sqlite3.connect("users_info.sqlite")  # подключение к бд
 
 
 def debug(*args, sep=' ', end='\n', file=None):
@@ -11,17 +14,25 @@ def debug(*args, sep=' ', end='\n', file=None):
         return False
 
 
-async def get_value_from_id(idq, table="users", sign_column="id", fields="*"):  # получение значения из базы
-    try:
+async def get_value_from_id(idq, table="users", sign_column="id", fields="*", get_all=False):
+    try:                                                                          # получение значения из базы
         ggdfg = '""'
-        debug(f'''SELECT {fields} FROM {table} WHERE {sign_column} = "{str(idq).replace('"', ggdfg)}"''')
-        data = bd.cursor().execute(f'''SELECT {fields} FROM {table} WHERE 
+        data = None
+        debug_mess = f'''SELECT {fields} FROM {table} WHERE {sign_column} = "{str(idq).replace('"', ggdfg)}" >>> '''
+        if not get_all:
+            data = bd.cursor().execute(f'''SELECT {fields} FROM {table} WHERE 
                                    {sign_column} = "{str(idq).replace('"', ggdfg)}"''').fetchone()
-        if fields != "*" and len(fields.split(",")) == 1:
+        else:
+            debug_mess = f'''SELECT {fields} FROM {table} >>> '''
+            data = bd.cursor().execute(f'''SELECT {fields} FROM {table}''').fetchall()
+        if fields != "*" and len(fields.split(",")) == 1 and (not get_all):
             if data is None:
+                debug(debug_mess + "None")
                 return None
+            debug(debug_mess + str(data[0]))
             return data[0]
         else:
+            debug(debug_mess + str(data))
             return data
     except BaseException as e:
         debug("In", "getValueFromId", e)
@@ -32,6 +43,7 @@ async def write_value_from_id(idq, fields, value, table="users"):  # измен�
     try:
         data = bd.cursor().execute(f"""UPDATE {table} SET {fields} = {value} WHERE id = {idq}""").fetchone()
         bd.commit()
+        debug(f"""UPDATE {table} SET {fields} = {value} WHERE id = {idq}""")
         return data
     except BaseException as e:
         debug("In", "writeValueFromId", e)
@@ -47,6 +59,10 @@ async def add_user(idq):  # добавление пользователя в б�
         return False
     debug("Добавлен новый пользователь, запись в БД завершена")
     return True
+
+
+async def update_keyboard(message: types.Message):
+    return types.ReplyKeyboardMarkup(keyboard=keyboards[global_variables.states[message.from_user.id]], resize_keyboard=True)
 
 
 async def cut_into_messages(idq, separator, data):  # разрезаем текст на сообщения по id часов

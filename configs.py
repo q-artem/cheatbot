@@ -1,11 +1,38 @@
 from aiogram import types
 
-keyboards = {"mainMenu": [
+CHOOSING_WATCH_TEXT = "Выбор браслета"
+SETTINGS_TEXT = "Настройки"
+BACK_TEXT = "Назад"
+
+IN_SLEEP_STATE = 0  # sleep
+IN_CHOICE_WATCH_STATE = 1  # in choice watch
+IN_SETTINGS_STATE = 2  # in settings
+
+keyboards = {IN_SLEEP_STATE: [
     [
-        types.KeyboardButton(text="Выбор браслета"),
-        types.KeyboardButton(text="Настройки")
-    ],
-], }
+        types.KeyboardButton(text=CHOOSING_WATCH_TEXT),
+        types.KeyboardButton(text=SETTINGS_TEXT),
+    ]
+], IN_CHOICE_WATCH_STATE: [
+    [
+        types.KeyboardButton(text=BACK_TEXT),
+        types.KeyboardButton(text="Mi Band 6"),
+        types.KeyboardButton(text="Mi Band 7"),
+    ], [
+        types.KeyboardButton(text="xiaomi watch 2 lite"),
+        types.KeyboardButton(text="Amazfit gts 2 mini"),
+    ], [
+        types.KeyboardButton(text='Моего браслета нет в списке'),
+    ]
+], IN_SETTINGS_STATE: [
+    [
+        types.KeyboardButton(text=BACK_TEXT),
+        types.KeyboardButton(text="Тут пока ничего нет"),
+    ], [
+        types.KeyboardButton(text="Совсем ничего"),
+    ]
+],
+}
 
 ENABLE_PROXY = False
 PROXY_URL = 'http://proxy.server:3128/'
@@ -22,8 +49,6 @@ hiMess2 = f'''
 ●Для принудительного разбиения текста на уведомления в конкретном месте - "[separator]". Предидущее уведомление закончится перед "[separator]", а следующее начнётся после
 ●Изменить сочетание символов для разделителя, время отправки, выбранный браслет и другое, а также добавить новый браслет можно в настройках
 ●При отправке сообщения (сообщений) бот подождёт заданный промежуток времени и отправит полученный текст сообщениями нужной длины в этот чат. В приложении для браслета должны быть включены соответствующие уведомления
-●Если Вам на часы пришли не все уведомления, попробуйте увеличить время между отправкой. Также возможно в памяти помещается меньшее количество, чем было отправлено
+●Если Вам на часы пришли не все уведомления, попробуйте увеличить время между отправкой. Также возможно, что в памяти часов помещается меньшее количество, чем было отправлено
 Для начала выбери свой браслет из меню
 '''
-
-
