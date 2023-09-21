@@ -89,7 +89,8 @@ async def send_cheats(message: types.Message):
         await message.answer(
             f'Принято, отправлю {quantity_messages} сообщени{quantity_messages_word} через {seconds_before} '
             f'секунд{seconds_before_word} c интервалом в {seconds_between} секунд{seconds_between_word}{reverse_word} '
-            f'на браслет ' + await get_value_from_id(watch_id, table="watches", fields="name"))
+            f'на браслет ' + await get_value_from_id(watch_id, table="watches", fields="name") +
+            ".\n\nЗакройте чат или выйдите из приложения")
         await asyncio.sleep(2)  # пока задержка, досылаются сообщения
         debug(f"Preparing to sending to user {message.from_user.id}...")
         await asyncio.sleep(await get_value_from_id(
