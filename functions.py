@@ -103,7 +103,7 @@ async def send_cheats(message: types.Message):
                 continue
             debug(f"Sending to user {message.from_user.id}... {len(split_messages) - 1} left\n",
                   split_messages[0].replace("\n", "\\n"))
-            await message.answer(split_messages[0])
+            await message.answer(split_messages[0].replace("<", "&lt;"))
             split_messages.pop(0)
             if len(split_messages) != 0:  # чтобы в конце не было задержки
                 await asyncio.sleep(seconds_between)

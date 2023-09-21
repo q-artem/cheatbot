@@ -1,4 +1,5 @@
 import sqlite3
+import time
 
 import global_variables
 from configs import *
@@ -8,7 +9,7 @@ bd = sqlite3.connect("users_info.sqlite")  # подключение к бд
 
 def debug(*args, sep=' ', end='\n', file=None):
     if ENABLE_DEBUG:
-        print("->", *args, sep=sep, end=end, file=file)
+        print(time.strftime("%m/%d/%Y %H:%M:%S", time.localtime()) + "." + str(time.time()).split(".")[-1], "->", *args, sep=sep, end=end, file=file)
         return True
     else:
         return False

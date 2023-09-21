@@ -43,9 +43,15 @@ async def cmd_start(message: types.Message):
 @dp.callback_query(F.data == "agreement_with_the_disclaimer")
 async def send_hi_message(callback: types.CallbackQuery):
     keyboard = types.ReplyKeyboardMarkup(keyboard=keyboards[IN_SLEEP_STATE], resize_keyboard=True)
-    if await get_value_from_id(callback.from_user.id) is None:
-        await callback.message.answer(hiMess2, reply_markup=keyboard)  # если первый раз - привет и добавляем
+    if await get_value_from_id(callback.from_user.id) is None:  # если первый раз - привет и добавляем
         await add_user(callback.from_user.id)
+        await callback.message.answer(
+            hiMess2.replace("Привет",
+                            f"Привет! Вы уже {await get_value_from_id(None, fields='id', get_all=True)}й человек, "
+                            f"который читает это", 1).replace("[separator]",
+                                                              await get_value_from_id(callback.from_user.id,
+                                                                                      fields="separator")),
+            reply_markup=keyboard)
     else:
         await callback.message.answer(  # если нет - привет снова
             hiMess2.replace("Привет", "С возвращением", 1).replace("[separator]",
@@ -61,9 +67,11 @@ async def send_hi_message(callback: types.CallbackQuery):
 
 @dp.message(F.text)
 async def message_handler(message: types.Message):
-    if await get_value_from_id(message.from_user.id, fields="agreementWithDisclaimer") == 0:
+    if await get_value_from_id(message.from_user.id, fields="agreementWithDisclaimer") != 1:
         await message.answer(f"Согласитесь с условиями использования.\nОтправить повторно - /start")
         return
+
+    debug(f"Input message from user {message.from_user.id}:\n", message.text.replace("\n", "\\n"))
 
     if await service_block(message):
         return True
