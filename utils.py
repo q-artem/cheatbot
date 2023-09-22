@@ -1,6 +1,8 @@
 import sqlite3
 import time
 
+from aiogram.utils.keyboard import InlineKeyboardBuilder
+
 import global_variables
 from configs import *
 
@@ -67,6 +69,12 @@ async def add_user(idq):  # добавление пользователя в б�
 
 async def update_keyboard(message: types.Message):
     return types.ReplyKeyboardMarkup(keyboard=keyboards[global_variables.states[message.from_user.id]], resize_keyboard=True)
+
+
+async def create_inline_button(text, name_funk):
+    builder = InlineKeyboardBuilder()
+    builder.add(types.InlineKeyboardButton(text=text, callback_data=name_funk))
+    return builder.as_markup()
 
 
 async def cut_into_messages(idq, separator, data):  # разрезаем текст на сообщения по id часов

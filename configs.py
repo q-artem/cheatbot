@@ -4,6 +4,8 @@ CHOOSING_WATCH_TEXT = "Выбор браслета"
 SETTINGS_TEXT = "Настройки"
 BACK_TEXT = "Назад"
 
+IN_PREPARING_TO_SENDING = -2
+IN_SENDING_MESSAGES = -1
 IN_SLEEP_STATE = 0  # sleep
 IN_CHOICE_WATCH_STATE = 1  # in choice watch
 IN_SETTINGS_STATE = 2  # in settings
@@ -34,7 +36,6 @@ keyboards = {IN_SLEEP_STATE: [
 ],
 }
 
-ENABLE_PROXY = False
 PROXY_URL = 'http://proxy.server:3128/'
 ENABLE_DEBUG = True
 TIMEZONE = 5
