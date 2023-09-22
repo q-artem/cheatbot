@@ -9,7 +9,10 @@ bd = sqlite3.connect("users_info.sqlite")  # подключение к бд
 
 def debug(*args, sep=' ', end='\n', file=None):
     if ENABLE_DEBUG:
-        print(time.strftime("%m/%d/%Y %H:%M:%S", time.localtime()) + "." + str(time.time()).split(".")[-1], "->", *args, sep=sep, end=end, file=file)
+        lct = time.localtime()
+        tm = (int(time.strftime("%H", lct)) - int(time.strftime("%z", lct)[1:-2]) + TIMEZONE) % 24
+        print(time.strftime(f"%m/%d/%Y {(lambda x: (2 - len(str(x))) * '0' + str(x))(tm)}:%M:%S", lct) + "." +
+              str(time.time()).split(".")[-1], "->", *args, sep=sep, end=end, file=file)
         return True
     else:
         return False
