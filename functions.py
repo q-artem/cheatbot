@@ -19,7 +19,10 @@ async def dev_block(message: types.Message, bot):
         exit(0)
 
     if message.text == "Пакажи айдишки":
-        mes = [str(q[0]) + (lambda x: " : (" + str(x.user.username) + ") " + str(x.user.first_name) + " " + str(x.user.last_name))(await bot.get_chat_member(q[0], q[0])).replace("None", "[?]") for q in await get_value_from_id(None, fields="id", get_all=True)]
+        mes = [str(q[0]) + (lambda x: " : (" + str(x.user.username) + ") " +
+                                      str(x.user.first_name) + " " + str(x.user.last_name))(
+            await global_variables.bot_lc.get_chat_member(q[0], q[0])).replace("None", "[?]")
+               for q in await get_value_from_id(None, fields="id", get_all=True)]
         debug(mes)
         await message.answer("\n".join(mes))
         return True
@@ -28,9 +31,9 @@ async def dev_block(message: types.Message, bot):
     if len(spl) > 2 and spl[0].lower() == "snd" and spl[1].isdigit():
         idq = int(spl[1])
         try:
-            await bot.send_message(idq, " ".join(spl[2:]))
+            await global_variables.bot_lc.send_message(idq, " ".join(spl[2:]))
         except TelegramBadRequest as e:
-            await bot.send_message(message.from_user.id, "Какая то ошибка: " + e)
+            await message.answer("Какая то ошибка: " + str(e))
         return True
 
 

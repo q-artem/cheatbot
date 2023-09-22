@@ -17,18 +17,19 @@ logging.basicConfig(level=logging.INFO)  # Включаем логировани
 dp = Dispatcher()  # Диспетчер
 
 
-async def main(bot_lc):  # Запуск процесса поллинга новых апдейтов
+async def main(bot_lc1):  # Запуск процесса поллинга новых апдейтов
     global_variables.states.update({q[0]: IN_SLEEP_STATE for q in await get_value_from_id(None,
                                                                                           fields="id", get_all=True)})
+    global_variables.bot_lc = bot_lc1
     debug("users in bd:", (", ".join([str(q) for q in global_variables.states.keys()])))
     try:
-        await dp.start_polling(bot_lc)
+        await dp.start_polling(global_variables.bot_lc)
     except Exception as e:
         print("Error:", e)
         print("Using Proxy", PROXY_URL)
         session = AiohttpSession(proxy=PROXY_URL)
-        bot_lc = Bot(token=config.bot_token.get_secret_value(), parse_mode="HTML", session=session)
-    await dp.start_polling(bot_lc)
+        global_variables.bot_lc = Bot(token=config.bot_token.get_secret_value(), parse_mode="HTML", session=session)
+    await dp.start_polling(global_variables.bot_lc)
 
 
 @dp.message(Command("start"))
