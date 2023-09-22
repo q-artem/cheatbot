@@ -87,4 +87,5 @@ async def message_handler(message: types.Message):
 
 
 if __name__ == "__main__":
+    print(HI_LOGO)
     asyncio.run(main())
