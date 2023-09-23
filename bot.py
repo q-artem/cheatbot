@@ -1,5 +1,7 @@
 import asyncio
 import logging
+import types
+
 from aiogram import Bot, Dispatcher
 from aiogram.filters.command import Command
 from aiogram.client.session.aiohttp import AiohttpSession
@@ -9,7 +11,7 @@ from configs import *
 import global_variables
 from config_reader import config
 from utils import get_value_from_id, debug, add_user, write_value_from_id, create_inline_button
-from functions import service_block, set_watch, send_cheats, set_settings, dev_block
+from functions import service_block, set_watch, send_cheats, set_settings, dev_block, send_hi_message
 
 bot = Bot(token=config.bot_token.get_secret_value(), parse_mode="HTML")
 
@@ -34,39 +36,22 @@ async def main(bot_lc1):  # Запуск процесса поллинга но�
 
 @dp.message(Command("start"))
 async def cmd_start(message: types.Message):
-    await message.answer(disclaimer, reply_markup=await create_inline_button(
-        "Я согласен и беру ответственность на себя", "agreement_with_the_disclaimer"))
+    if await get_value_from_id(message.from_user.id) is None:  # если первый раз - дисклеймер
+        await message.answer(disclaimer, reply_markup=await create_inline_button(
+            "Я согласен и беру ответственность на себя", "agreement_with_the_disclaimer"))
+    else:
+        await send_hi_message(message, False)
+    return True
 
 
 @dp.callback_query(F.data == "agreement_with_the_disclaimer")
-async def send_hi_message(callback: types.CallbackQuery):
-    keyboard = types.ReplyKeyboardMarkup(keyboard=keyboards[IN_SLEEP_STATE], resize_keyboard=True)
-    try:
-        global_variables.inputs.pop(callback.from_user.id)  # если перезапустили
-    except KeyError:
-        pass
-    try:
-        global_variables.states[callback.from_user.id] = IN_SLEEP_STATE  # добавим в список юзеров в переменной
-    except KeyError:
-        pass
-    if await get_value_from_id(callback.from_user.id) is None:  # если первый раз - привет и добавляем
-        await add_user(callback.from_user.id)
-        await callback.message.answer(
-            hiMess2.replace("Привет",
-                            f"Привет! Вы уже {len(await get_value_from_id(None, fields='id', get_all=True))}й человек, "
-                            f"который читает это", 1).replace("[separator]",
-                                                              await get_value_from_id(callback.from_user.id,
-                                                                                      fields="separator")),
-            reply_markup=keyboard)
+async def send_hi_message_handler(callback: types.CallbackQuery):
+    if await get_value_from_id(callback.from_user.id) is None:  # если первый раз
+        await send_hi_message(callback.message, True)
     else:
-        await callback.message.answer(  # если нет - привет снова
-            hiMess2.replace("Привет", "С возвращением", 1).replace("[separator]",
-                                                                   await get_value_from_id(callback.from_user.id,
-                                                                                           fields="separator")),
-            reply_markup=keyboard)
-    await write_value_from_id(callback.from_user.id, "agreementWithDisclaimer", 1)
-    debug(callback.from_user.id)
+        await callback.message.answer("Вы уже согласились с условиями использования")
     await callback.answer()
+    return True
 
 
 @dp.callback_query(F.data == "cansel_sending")

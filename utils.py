@@ -67,7 +67,9 @@ async def add_user(idq):  # добавление пользователя в б�
     return True
 
 
-async def update_keyboard(message: types.Message):
+async def update_keyboard(message: types.Message, is_watches_keyboard: bool = False):
+    if is_watches_keyboard:
+        return types.ReplyKeyboardMarkup(keyboard=await build_keyboard(), resize_keyboard=True)
     return types.ReplyKeyboardMarkup(keyboard=keyboards[global_variables.states[message.from_user.id]], resize_keyboard=True)
 
 
@@ -75,6 +77,38 @@ async def create_inline_button(text, name_funk):
     builder = InlineKeyboardBuilder()
     builder.add(types.InlineKeyboardButton(text=text, callback_data=name_funk))
     return builder.as_markup()
+
+
+def calculate_max_length_name(text: str):
+    spl = text.split(" ")
+    spl1 = []
+    min_m = len(text)
+    while len(spl) != 1:
+        spl1 = [*spl1, spl.pop(0)]
+        min_m = min(max(len(" ".join(spl1)), len(" ".join(spl))), min_m)
+    return min_m
+
+
+async def build_keyboard():
+    lst = [BACK_TEXT] + sorted([q[0] for q in await get_value_from_id(None, table="watches",
+                                                                      fields="name", get_all=True)],
+                               key=(lambda x: (LENS_TEXT_BUTTONS[1] - calculate_max_length_name(x)) * "a" + "b" + x))
+    current_len_row = 6
+    ot = []
+    while current_len_row > 0:
+        if len(lst) >= current_len_row:
+            if LENS_TEXT_BUTTONS[current_len_row] // 2 >= calculate_max_length_name(lst[current_len_row - 1]):
+                lst1 = []
+                for q in range(current_len_row):
+                    lst1.append(types.KeyboardButton(text=lst.pop(0)))
+                ot.append(lst1)
+            else:
+                current_len_row -= 1
+        else:
+            current_len_row -= 1
+    return ot
+
+
 
 
 async def cut_into_messages(idq, separator, data):  # разрезаем текст на сообщения по id часов

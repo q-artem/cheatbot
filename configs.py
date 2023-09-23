@@ -4,6 +4,8 @@ CHOOSING_WATCH_TEXT = "Выбор браслета"
 SETTINGS_TEXT = "Настройки"
 BACK_TEXT = "Назад"
 
+REVERSE_OR_STRAIGHT_SENDING = "Отправка в прямом/обратном порядке"
+
 IN_PREPARING_TO_SENDING = -2
 IN_SENDING_MESSAGES = -1
 IN_SLEEP_STATE = 0  # sleep
@@ -15,21 +17,10 @@ keyboards = {IN_SLEEP_STATE: [
         types.KeyboardButton(text=CHOOSING_WATCH_TEXT),
         types.KeyboardButton(text=SETTINGS_TEXT),
     ]
-], IN_CHOICE_WATCH_STATE: [
-    [
-        types.KeyboardButton(text=BACK_TEXT),
-        types.KeyboardButton(text="Mi Band 6"),
-        types.KeyboardButton(text="Mi Band 7"),
-    ], [
-        types.KeyboardButton(text="xiaomi watch 2 lite"),
-        types.KeyboardButton(text="Amazfit gts 2 mini"),
-    ], [
-        types.KeyboardButton(text='Моего браслета нет в списке'),
-    ]
 ], IN_SETTINGS_STATE: [
     [
         types.KeyboardButton(text=BACK_TEXT),
-        types.KeyboardButton(text="Тут пока ничего нет"),
+        types.KeyboardButton(text=REVERSE_OR_STRAIGHT_SENDING),
     ], [
         types.KeyboardButton(text="Совсем ничего"),
     ]
@@ -39,6 +30,7 @@ keyboards = {IN_SLEEP_STATE: [
 PROXY_URL = 'http://proxy.server:3128/'
 ENABLE_DEBUG = True
 TIMEZONE = 5
+LENS_TEXT_BUTTONS = {1: 76, 2: 36, 3: 22, 4: 16, 5: 12, 6: 8}
 
 disclaimer = '''⠀                       ДИС<b>КЛЕЙ</b>МЕР
 Этот бот создан исключительно с целью тестирования большим количеством уведомлений за короткий промежуток времени Ваших смарт-часов и фитнес-браслетов. Использование бота в иных целях не предусмотрено. 

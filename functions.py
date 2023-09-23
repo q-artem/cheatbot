@@ -4,9 +4,9 @@ from aiogram.exceptions import TelegramBadRequest
 
 import global_variables
 from configs import CHOOSING_WATCH_TEXT, IN_CHOICE_WATCH_STATE, IN_SLEEP_STATE, BACK_TEXT, SETTINGS_TEXT, \
-    IN_SETTINGS_STATE, IN_SENDING_MESSAGES, IN_PREPARING_TO_SENDING
+    IN_SETTINGS_STATE, IN_SENDING_MESSAGES, IN_PREPARING_TO_SENDING, keyboards, hiMess2, REVERSE_OR_STRAIGHT_SENDING
 from utils import update_keyboard, get_value_from_id, write_value_from_id, cut_into_messages, debug, \
-    create_inline_button
+    create_inline_button, add_user
 
 
 async def dev_block(message: types.Message, bot):
@@ -40,7 +40,7 @@ async def dev_block(message: types.Message, bot):
 async def service_block(message: types.Message):
     if message.text == CHOOSING_WATCH_TEXT:
         global_variables.states[message.from_user.id] = IN_CHOICE_WATCH_STATE
-        await message.answer('Выберите свои часы из меню:', reply_markup=await update_keyboard(message))
+        await message.answer('Выберите свои часы из меню:', reply_markup=await update_keyboard(message, is_watches_keyboard=True))
         return True
 
     if message.text == SETTINGS_TEXT:
@@ -79,9 +79,13 @@ async def set_settings(message: types.Message):
     if global_variables.states[message.from_user.id] != IN_SETTINGS_STATE:
         return False
 
-    pass
-
-    await message.answer('Сорян, пока без настроек')
+    if message.text == REVERSE_OR_STRAIGHT_SENDING:
+        snd = await get_value_from_id(message.from_user.id, fields="inverseSending")
+        await write_value_from_id(message.from_user.id, "inverseSending", int(not snd))
+        await message.answer('Готово!\nСообщения будут отсылаться ' + ["в обратном порядке",
+                                                                       "в прямом порядке (по умолчанию)"][snd])
+    else:
+        await message.answer('Для возврата в главное меню нажмите кнопку "Назад"')
     return False
 
 
@@ -151,3 +155,32 @@ async def send_cheats(message: types.Message):
             f'Добавлено ещё одно сообщение, будет отправлено {quantity_messages} сообщени{quantity_messages_word}')
         debug(f"Added 1 message from user {message.from_user.id}, will be send {quantity_messages} messages")
     return True
+
+
+async def send_hi_message(message: types.Message, is_first_start: bool):
+    keyboard = types.ReplyKeyboardMarkup(keyboard=keyboards[IN_SLEEP_STATE], resize_keyboard=True)
+    try:
+        global_variables.inputs.pop(message.chat.id)  # если перезапустили
+    except KeyError:
+        pass
+    try:
+        global_variables.states[message.chat.id] = IN_SLEEP_STATE  # добавим в список юзеров в переменной
+    except KeyError:
+        pass
+    if is_first_start:  # если первый раз - привет и добавляем
+        await add_user(message.chat.id)
+        await message.answer(
+            hiMess2.replace("Привет",
+                            f"Привет! Вы уже {len(await get_value_from_id(None, fields='id', get_all=True))}й человек, "
+                            f"который читает это", 1).replace("[separator]",
+                                                              await get_value_from_id(message.chat.id,
+                                                                                      fields="separator")),
+            reply_markup=keyboard)
+        await write_value_from_id(message.chat.id, "agreementWithDisclaimer", 1)
+    else:
+        await message.answer(  # если нет - привет снова
+            hiMess2.replace("Привет", "С возвращением", 1).replace("[separator]",
+                                                                   await get_value_from_id(message.chat.id,
+                                                                                           fields="separator")),
+            reply_markup=keyboard)
+
