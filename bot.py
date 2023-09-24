@@ -1,6 +1,5 @@
 import asyncio
 import logging
-import types
 
 from aiogram import Bot, Dispatcher
 from aiogram.filters.command import Command
@@ -10,7 +9,7 @@ from aiogram import F
 from configs import *
 import global_variables
 from config_reader import config
-from utils import get_value_from_id, debug, add_user, write_value_from_id, create_inline_button
+from utils import get_value_from_id, debug, create_inline_button
 from functions import service_block, set_watch, send_cheats, set_settings, dev_block, send_hi_message
 
 bot = Bot(token=config.bot_token.get_secret_value(), parse_mode="HTML")
@@ -74,7 +73,7 @@ async def message_handler(message: types.Message):
 
     debug(f"Input message from user {message.from_user.id}:\n", message.text.replace("\n", "\\n"))
 
-    if await dev_block(message, bot):
+    if await dev_block(message):
         return True
 
     if global_variables.states[message.from_user.id] == IN_SENDING_MESSAGES:  # если работаем

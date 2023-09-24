@@ -20,10 +20,20 @@ def debug(*args, sep=' ', end='\n', file=None):
         return False
 
 
+async def enter_bd_request(rq: str):
+    try:
+        data = bd.cursor().execute(rq).fetchall()
+        bd.commit()
+        debug("User bd request: " + rq + " >>> " + str(data))
+        return True, data
+    except BaseException as e:
+        debug("In", "getValueFromId", e)
+        return False, e
+
+
 async def get_value_from_id(idq, table="users", sign_column="id", fields="*", get_all=False):
     try:                                                                          # получение значения из базы
         ggdfg = '""'
-        data = None
         debug_mess = f'''SELECT {fields} FROM {table} WHERE {sign_column} = "{str(idq).replace('"', ggdfg)}" >>> '''
         if not get_all:
             data = bd.cursor().execute(f'''SELECT {fields} FROM {table} WHERE 
@@ -70,7 +80,8 @@ async def add_user(idq):  # добавление пользователя в б�
 async def update_keyboard(message: types.Message, is_watches_keyboard: bool = False):
     if is_watches_keyboard:
         return types.ReplyKeyboardMarkup(keyboard=await build_keyboard(), resize_keyboard=True)
-    return types.ReplyKeyboardMarkup(keyboard=keyboards[global_variables.states[message.from_user.id]], resize_keyboard=True)
+    return types.ReplyKeyboardMarkup(keyboard=keyboards[global_variables.states[message.from_user.id]],
+                                     resize_keyboard=True)
 
 
 async def create_inline_button(text, name_funk):
@@ -107,8 +118,6 @@ async def build_keyboard():
         else:
             current_len_row -= 1
     return ot
-
-
 
 
 async def cut_into_messages(idq, separator, data):  # разрезаем текст на сообщения по id часов

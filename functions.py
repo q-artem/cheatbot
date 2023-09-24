@@ -1,26 +1,26 @@
 import asyncio
 from aiogram import types
 from aiogram.exceptions import TelegramBadRequest
+import aiogram.utils.markdown as fmt
 
 import global_variables
 from configs import CHOOSING_WATCH_TEXT, IN_CHOICE_WATCH_STATE, IN_SLEEP_STATE, BACK_TEXT, SETTINGS_TEXT, \
     IN_SETTINGS_STATE, IN_SENDING_MESSAGES, IN_PREPARING_TO_SENDING, keyboards, hiMess2, REVERSE_OR_STRAIGHT_SENDING
 from utils import update_keyboard, get_value_from_id, write_value_from_id, cut_into_messages, debug, \
-    create_inline_button, add_user
+    create_inline_button, add_user, enter_bd_request
 
 
-async def dev_block(message: types.Message, bot):
+async def dev_block(message: types.Message):
+    if message.from_user.id != 1722948286:
+        return False
+
     if message.text == "Здохни":
-        await message.answer('Неа, всё, отладка больше не работает')
-        return True
-
-    if message.text == "Здохни, заклинаю":
         await message.answer('Okk')
         exit(0)
 
     if message.text == "Пакажи айдишки":
-        mes = [str(q[0]) + (lambda x: " : (" + str(x.user.username) + ") " +
-                                      str(x.user.first_name) + " " + str(x.user.last_name))(
+        mes = [fmt.hcode(str(q[0])) + (lambda x: " : (" + str(x.user.username) + ")\n" +
+                                                 str(x.user.first_name) + " " + str(x.user.last_name))(
             await global_variables.bot_lc.get_chat_member(q[0], q[0])).replace("None", "[?]")
                for q in await get_value_from_id(None, fields="id", get_all=True)]
         debug(mes)
@@ -28,19 +28,30 @@ async def dev_block(message: types.Message, bot):
         return True
 
     spl = message.text.split(" ")
+    if len(spl) > 2 and spl[0].lower() == "bd":
+        idq = await enter_bd_request(" ".join(spl[1:]))
+        if idq[0]:
+            await message.answer("Удачно!\n" + "\n".join(("(" + ", ".join(["<code>" + str(w) + "</code>" for w in q]) + ")" for q in idq[1])))
+        else:
+            await message.answer("Неудачно! Ошибка:\n" + str(idq[1]))
+        return True
+
     if len(spl) > 2 and spl[0].lower() == "snd" and spl[1].isdigit():
         idq = int(spl[1])
         try:
             await global_variables.bot_lc.send_message(idq, " ".join(spl[2:]))
         except TelegramBadRequest as e:
             await message.answer("Какая то ошибка: " + str(e))
+            return True
+        await message.answer("Готово!")
         return True
 
 
 async def service_block(message: types.Message):
     if message.text == CHOOSING_WATCH_TEXT:
         global_variables.states[message.from_user.id] = IN_CHOICE_WATCH_STATE
-        await message.answer('Выберите свои часы из меню:', reply_markup=await update_keyboard(message, is_watches_keyboard=True))
+        await message.answer('Выберите свои часы из меню:',
+                             reply_markup=await update_keyboard(message, is_watches_keyboard=True))
         return True
 
     if message.text == SETTINGS_TEXT:
@@ -183,4 +194,3 @@ async def send_hi_message(message: types.Message, is_first_start: bool):
                                                                    await get_value_from_id(message.chat.id,
                                                                                            fields="separator")),
             reply_markup=keyboard)
-
