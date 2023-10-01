@@ -5,7 +5,12 @@ import aiogram.utils.markdown as fmt
 
 import global_variables
 from configs import CHOOSING_WATCH_TEXT, IN_CHOICE_WATCH_STATE, IN_SLEEP_STATE, BACK_TEXT, SETTINGS_TEXT, \
-    IN_SETTINGS_STATE, IN_SENDING_MESSAGES, IN_PREPARING_TO_SENDING, keyboards, hiMess2, REVERSE_OR_STRAIGHT_SENDING
+    IN_SETTINGS_STATE, IN_SENDING_MESSAGES_STATE, IN_PREPARING_TO_SENDING_STATE, keyboards, HI_MES2, \
+    REVERSE_OR_STRAIGHT_SENDING_TEXT, \
+    MAX_QUANTITY_MESSAGES, SET_SEPARATOR_MESSAGES_TEXT, IN_SET_SEPARATOR_MESSAGES_STATE, MAX_LEN_SEP, \
+    IN_SET_TIME_BETWEEN_MESSAGES_STATE, SET_TIME_BETWEEN_MESSAGES_TEXT, MIN_TIME_BETWEEN_MESSAGES, \
+    MAX_TIME_BETWEEN_MESSAGES, SET_TIME_BEFORE_SENDING_TEXT, IN_SET_TIME_BEFORE_SENDING_STATE, \
+    MIN_TIME_BEFORE_MESSAGES, MAX_TIME_BEFORE_MESSAGES
 from utils import update_keyboard, get_value_from_id, write_value_from_id, cut_into_messages, debug, \
     create_inline_button, add_user, enter_bd_request
 
@@ -31,7 +36,8 @@ async def dev_block(message: types.Message):
     if len(spl) > 2 and spl[0].lower() == "bd":
         idq = await enter_bd_request(" ".join(spl[1:]))
         if idq[0]:
-            await message.answer("Удачно!\n" + "\n".join(("(" + ", ".join(["<code>" + str(w) + "</code>" for w in q]) + ")" for q in idq[1])))
+            await message.answer("Удачно!\n" + "\n".join(
+                ("(" + ", ".join(["<code>" + str(w) + "</code>" for w in q]) + ")" for q in idq[1])))
         else:
             await message.answer("Неудачно! Ошибка:\n" + str(idq[1]))
         return True
@@ -65,6 +71,14 @@ async def service_block(message: types.Message):
         await message.answer('Готов к работе!', reply_markup=await update_keyboard(message))
         return True
 
+    if message.text == BACK_TEXT and \
+            (global_variables.states[message.from_user.id] == IN_SET_SEPARATOR_MESSAGES_STATE or
+             global_variables.states[message.from_user.id] == IN_SET_TIME_BETWEEN_MESSAGES_STATE or
+             global_variables.states[message.from_user.id] == IN_SET_TIME_BEFORE_SENDING_STATE):
+        global_variables.states[message.from_user.id] = IN_SETTINGS_STATE
+        await message.answer('Выберите параметр из меню:', reply_markup=await update_keyboard(message))
+        return True
+
     if message.text == 'Моего браслета нет в списке':
         await message.answer(
             'Ой, не, ну а чего ты хотел, чтобы ещё и сторонние браслеты добавлять? Может потом сделаю')
@@ -90,19 +104,89 @@ async def set_settings(message: types.Message):
     if global_variables.states[message.from_user.id] != IN_SETTINGS_STATE:
         return False
 
-    if message.text == REVERSE_OR_STRAIGHT_SENDING:
+    if message.text == REVERSE_OR_STRAIGHT_SENDING_TEXT:
         snd = await get_value_from_id(message.from_user.id, fields="inverseSending")
         await write_value_from_id(message.from_user.id, "inverseSending", int(not snd))
         await message.answer('Готово!\nСообщения будут отсылаться ' + ["в обратном порядке",
                                                                        "в прямом порядке (по умолчанию)"][snd])
-    else:
-        await message.answer('Для возврата в главное меню нажмите кнопку "Назад"')
+        return True
+
+    if message.text == SET_SEPARATOR_MESSAGES_TEXT:
+        global_variables.states[message.from_user.id] = IN_SET_SEPARATOR_MESSAGES_STATE
+        await message.answer(f'Введите новый разделитель текста или выберите из меню, максимум {MAX_LEN_SEP} символов '
+                             f'(текущий "{await get_value_from_id(message.from_user.id, fields="separator")}"):',
+                             reply_markup=await update_keyboard(message))
+        return True
+
+    if message.text == SET_TIME_BETWEEN_MESSAGES_TEXT:
+        global_variables.states[message.from_user.id] = IN_SET_TIME_BETWEEN_MESSAGES_STATE
+        await message.answer(f'Введите новое время в секундах между отправкой сообщений или выберите из меню, минимум '
+                             f'{MIN_TIME_BETWEEN_MESSAGES}, максимум {MAX_TIME_BETWEEN_MESSAGES} (сейчас '
+                             f'{await get_value_from_id(message.from_user.id, fields="timeBetweenMessages")}):',
+                             reply_markup=await update_keyboard(message))
+        return True
+
+    if message.text == SET_TIME_BEFORE_SENDING_TEXT:
+        global_variables.states[message.from_user.id] = IN_SET_TIME_BEFORE_SENDING_STATE
+        await message.answer(f'Введите новое время в секундах перед отправкой сообщений или выберите из меню, минимум '
+                             f'{MIN_TIME_BEFORE_MESSAGES}, максимум {MAX_TIME_BEFORE_MESSAGES} (сейчас '
+                             f'{await get_value_from_id(message.from_user.id, fields="timeBeforeSending")}):',
+                             reply_markup=await update_keyboard(message))
+        return True
+
+    await message.answer('Для возврата в главное меню нажмите кнопку "Назад"')
+    return False
+
+
+async def set_settings_lv2(message: types.Message):
+    if global_variables.states[message.from_user.id] != IN_SET_SEPARATOR_MESSAGES_STATE and \
+            global_variables.states[message.from_user.id] != IN_SET_TIME_BETWEEN_MESSAGES_STATE and \
+            global_variables.states[message.from_user.id] != IN_SET_TIME_BEFORE_SENDING_STATE:
+        return False
+
+    if global_variables.states[message.from_user.id] == IN_SET_SEPARATOR_MESSAGES_STATE:
+        await write_value_from_id(message.from_user.id, "separator", message.text[:MAX_LEN_SEP].replace("\n", ""))
+        global_variables.states[message.from_user.id] = IN_SETTINGS_STATE
+        await message.answer(f'Готово! Разделитель текста изменён на '
+                             f'"{await get_value_from_id(message.from_user.id, fields="separator")}"',
+                             reply_markup=await update_keyboard(message))
+        return True
+
+    if global_variables.states[message.from_user.id] == IN_SET_TIME_BETWEEN_MESSAGES_STATE:
+        if message.text.isdigit() or (len(message.text.split(".")) == 2 and message.text.split(".")[0].isdigit() and
+                                      message.text.split(".")[1]):
+            await write_value_from_id(message.from_user.id, "timeBetweenMessages",
+                                      float(max(min(MAX_TIME_BETWEEN_MESSAGES, round(float(message.text), 2)),
+                                                MIN_TIME_BETWEEN_MESSAGES)))
+            global_variables.states[message.from_user.id] = IN_SETTINGS_STATE
+            await message.answer(f'Готово! Время между отправкой сообщений изменено на '
+                                 f'{await get_value_from_id(message.from_user.id, fields="timeBetweenMessages")} '
+                                 f'секунд', reply_markup=await update_keyboard(message))
+        else:
+            await message.answer('Ошибка! Введено неверное время. Для возврата в главное меню нажмите кнопку "Назад"')
+        return True
+
+    if global_variables.states[message.from_user.id] == IN_SET_TIME_BEFORE_SENDING_STATE:
+        if message.text.isdigit() or (len(message.text.split(".")) == 2 and message.text.split(".")[0].isdigit() and
+                                      message.text.split(".")[1]):
+            await write_value_from_id(message.from_user.id, "timeBeforeSending",
+                                      float(max(min(MAX_TIME_BEFORE_MESSAGES, round(float(message.text), 2)),
+                                                MIN_TIME_BEFORE_MESSAGES)))
+            global_variables.states[message.from_user.id] = IN_SETTINGS_STATE
+            await message.answer(f'Готово! Время перед отправкой сообщений изменено на '
+                                 f'{await get_value_from_id(message.from_user.id, fields="timeBeforeSending")} '
+                                 f'секунд', reply_markup=await update_keyboard(message))
+        else:
+            await message.answer('Ошибка! Введено неверное время. Для возврата в главное меню нажмите кнопку "Назад"')
+        return True
+
+    await message.answer('Для возврата в главное меню нажмите кнопку "Назад"')
     return False
 
 
 async def send_cheats(message: types.Message):
     if global_variables.states[message.from_user.id] != IN_SLEEP_STATE and \
-            global_variables.states[message.from_user.id] != IN_PREPARING_TO_SENDING:
+            global_variables.states[message.from_user.id] != IN_PREPARING_TO_SENDING_STATE:
         return True
     first_call = True
     if message.from_user.id in global_variables.inputs.keys():
@@ -113,21 +197,31 @@ async def send_cheats(message: types.Message):
     global_variables.inputs[message.from_user.id] += message.text
     watch_id, separator, reverse = await get_value_from_id(message.from_user.id,
                                                            fields="selectedWatch, separator, inverseSending")
-    quantity_messages = len(
-        [1 for q in (await cut_into_messages(watch_id, separator, global_variables.inputs[message.from_user.id])) if
-         q != ""])
+    is_quantity_messages_highest = ""
+    quantity_messages_no_split_max = len([1 for q in
+                                          (await cut_into_messages(watch_id, separator,
+                                                                   global_variables.inputs[message.from_user.id]
+                                                                   )) if q != ""])
+    quantity_messages = min(MAX_QUANTITY_MESSAGES, quantity_messages_no_split_max)  # не больше скольки то уведомлений
     quantity_messages_word = (lambda x: ("е" + "я" * 3 + "й" * 6)[(x - 1) % 10])(quantity_messages)
+    if quantity_messages_no_split_max > MAX_QUANTITY_MESSAGES:
+        is_quantity_messages_highest = "первые "
     if first_call:
-        global_variables.states[message.from_user.id] = IN_PREPARING_TO_SENDING
-        seconds_before = await get_value_from_id(message.from_user.id, fields="timeBeforeSending")
-        seconds_between = await get_value_from_id(message.from_user.id, fields="timeBetweenMessages")
-        seconds_before_word = (lambda x: ("у" + "ы" * 3 + "д" * 6)[(x - 1) % 10])(seconds_before).replace("д", "")
-        seconds_between_word = (lambda x: ("у" + "ы" * 3 + "д" * 6)[(x - 1) % 10])(seconds_between).replace("д", "")
+        global_variables.states[message.from_user.id] = IN_PREPARING_TO_SENDING_STATE
+        seconds_before = (lambda x: [x, int(x)][x.is_integer()])(await get_value_from_id(message.from_user.id,
+                                                                                         fields="timeBeforeSending"))
+        seconds_between = (lambda x: [x, int(x)][x.is_integer()])(await get_value_from_id(message.from_user.id,
+                                                                                          fields="timeBetweenMessages"))
+        seconds_before_word = (lambda x: ("у" + "ы" * 3 + "д" * 6)[(x - 1) % 10])(
+            int(str(seconds_before).split(".")[-1])).replace("д", "")
+        seconds_between_word = (lambda x: ("у" + "ы" * 3 + "д" * 6)[(x - 1) % 10])(
+            int(str(seconds_between).split(".")[-1])).replace("д", "")
         reverse_word = (lambda x: ["", " в обратном порядке"][x])(reverse)  # нормальные секунды ^
         await message.answer(
-            f'Принято, отправлю {quantity_messages} сообщени{quantity_messages_word} через {seconds_before} '
-            f'секунд{seconds_before_word} c интервалом в {seconds_between} секунд{seconds_between_word}{reverse_word} '
-            f'на браслет ' + await get_value_from_id(watch_id, table="watches", fields="name") +
+            f'Принято, отправлю {is_quantity_messages_highest}{quantity_messages} сообщени{quantity_messages_word} '
+            f'через {seconds_before} секунд{seconds_before_word} c интервалом в {seconds_between} '
+            f'секунд{seconds_between_word}{reverse_word} на браслет '
+            + await get_value_from_id(watch_id, table="watches", fields="name") +
             ".\n\nЗакройте чат или выйдите из приложения", reply_markup=await create_inline_button("Отменить отправку",
                                                                                                    "cansel_sending"))
         await asyncio.sleep(2)  # пока задержка, досылаются сообщения
@@ -135,17 +229,17 @@ async def send_cheats(message: types.Message):
         await asyncio.sleep(await get_value_from_id(
             message.from_user.id, fields="timeBeforeSending") - 2)  # пока задержка, досылаются сообщения
         split_messages = await cut_into_messages(watch_id, separator, global_variables.inputs[message.from_user.id])
+        split_messages = split_messages[:MAX_QUANTITY_MESSAGES]
         global_variables.inputs.pop(message.from_user.id)
-        if global_variables.states[message.from_user.id] == IN_PREPARING_TO_SENDING:
-            global_variables.states[message.from_user.id] = IN_SENDING_MESSAGES
+        if global_variables.states[message.from_user.id] == IN_PREPARING_TO_SENDING_STATE:
+            global_variables.states[message.from_user.id] = IN_SENDING_MESSAGES_STATE
         else:
             debug("Sending interrupted!")
             return True
         if reverse:
             split_messages = split_messages[::-1]
         while len(split_messages) > 0:
-            print(message.from_user.id, global_variables.states[message.from_user.id])
-            if global_variables.states[message.from_user.id] != IN_SENDING_MESSAGES:
+            if global_variables.states[message.from_user.id] != IN_SENDING_MESSAGES_STATE:
                 break
             if split_messages[0] == "":  # не помню зачем, но не повредит
                 split_messages.pop(0)
@@ -163,7 +257,8 @@ async def send_cheats(message: types.Message):
         debug("Sending interrupted!")
     else:
         await message.answer(
-            f'Добавлено ещё одно сообщение, будет отправлено {quantity_messages} сообщени{quantity_messages_word}')
+            f'Добавлено ещё одно сообщение, будут отправлены {is_quantity_messages_highest}{quantity_messages} '
+            f'сообщени{quantity_messages_word}')
         debug(f"Added 1 message from user {message.from_user.id}, will be send {quantity_messages} messages")
     return True
 
@@ -181,7 +276,7 @@ async def send_hi_message(message: types.Message, is_first_start: bool):
     if is_first_start:  # если первый раз - привет и добавляем
         await add_user(message.chat.id)
         await message.answer(
-            hiMess2.replace("Привет",
+            HI_MES2.replace("Привет",
                             f"Привет! Вы уже {len(await get_value_from_id(None, fields='id', get_all=True))}й человек, "
                             f"который читает это", 1).replace("[separator]",
                                                               await get_value_from_id(message.chat.id,
@@ -190,7 +285,7 @@ async def send_hi_message(message: types.Message, is_first_start: bool):
         await write_value_from_id(message.chat.id, "agreementWithDisclaimer", 1)
     else:
         await message.answer(  # если нет - привет снова
-            hiMess2.replace("Привет", "С возвращением", 1).replace("[separator]",
+            HI_MES2.replace("Привет", "С возвращением", 1).replace("[separator]",
                                                                    await get_value_from_id(message.chat.id,
                                                                                            fields="separator")),
             reply_markup=keyboard)

@@ -32,41 +32,54 @@ async def enter_bd_request(rq: str):
 
 
 async def get_value_from_id(idq, table="users", sign_column="id", fields="*", get_all=False):
-    try:                                                                          # получение значения из базы
-        ggdfg = '""'
-        debug_mess = f'''SELECT {fields} FROM {table} WHERE {sign_column} = "{str(idq).replace('"', ggdfg)}" >>> '''
+    debug_mess = ""
+    try:  # получение значения из базы
         if not get_all:
-            data = bd.cursor().execute(f'''SELECT {fields} FROM {table} WHERE 
-                                   {sign_column} = "{str(idq).replace('"', ggdfg)}"''').fetchone()
+            debug_mess = """SELECT {fields} FROM {table} WHERE {sign_column} = {idq}""".format(fields=fields,
+                                                                                               table=table,
+                                                                                               sign_column=sign_column,
+                                                                                               idq=idq, )
+            data = bd.cursor().execute(
+                """SELECT {fields} FROM {table} WHERE {sign_column} = ?""".format(fields=fields,
+                                                                                  table=table,
+                                                                                  sign_column=sign_column, ),
+                (idq,)).fetchone()
         else:
             debug_mess = f'''SELECT {fields} FROM {table} >>> '''
-            data = bd.cursor().execute(f'''SELECT {fields} FROM {table}''').fetchall()
+            data = bd.cursor().execute('''SELECT {fields} FROM {table}'''.format(fields=fields,
+                                                                                 table=table,
+                                                                                 )).fetchall()
         if fields != "*" and len(fields.split(",")) == 1 and (not get_all):
             if data is None:
-                debug(debug_mess + "None")
+                debug(debug_mess + " >>> " + "None")
                 return None
-            debug(debug_mess + str(data[0]))
+            debug(debug_mess + " >>> " + str(data[0]))
             return data[0]
         else:
-            debug(debug_mess + str(data))
+            debug(debug_mess + " >>> " + str(data))
             return data
     except BaseException as e:
-        debug("In", "getValueFromId", e)
+        debug("In", "getValueFromId", str(e) + "; request: " + debug_mess)
         return False
 
 
 async def write_value_from_id(idq, fields, value, table="users"):  # изменение значения в базе
     try:
-        data = bd.cursor().execute(f"""UPDATE {table} SET {fields} = {value} WHERE id = {idq}""").fetchone()
+        data = bd.cursor().execute("""UPDATE {table} SET {fields} = ? WHERE id = ?""".format(table=table,
+                                                                                             fields=fields,
+                                                                                             ), (value, idq)).fetchone()
         bd.commit()
-        debug(f"""UPDATE {table} SET {fields} = {value} WHERE id = {idq}""")
+        debug("""UPDATE {table} SET {fields} = {value} WHERE id = {idq}""".format(table=table,
+                                                                                  fields=fields,
+                                                                                  value=value,
+                                                                                  idq=idq))
         return data
     except BaseException as e:
         debug("In", "writeValueFromId", e)
         return False
 
 
-async def add_user(idq):  # добавление пользователя в базу данных
+async def add_user(idq) -> bool:  # добавление пользователя в базу данных
     try:
         bd.cursor().execute("""INSERT INTO users (id) VALUES (?)""", (idq,))
         bd.commit()
@@ -122,14 +135,23 @@ async def build_keyboard():
 
 async def cut_into_messages(idq, separator, data):  # разрезаем текст на сообщения по id часов
     max_len = await get_value_from_id(idq, fields="maxLengthRussian", table="watches")
-    lst = []
+    lst = []  # сейчас сообщения длины максимум как бд минус 1
     while len(data) > max_len or separator in data:
+        data = data.strip()
         if separator in data[0:max_len]:
             ind = data[0:max_len].find(separator)
             lst.append(data[0:ind])
             data = data[ind + len(separator):]
         else:
-            lst.append(data[0:max_len])
-            data = data[max_len:]
+            if " " in data[0:max_len]:
+                ind = 0
+                for q in range(len(data[0:max_len])):
+                    if data[0:max_len][q] == " ":
+                        ind = q
+                lst.append(data[0:ind])
+                data = data[ind:]
+            else:
+                lst.append(data[0:max_len])
+                data = data[max_len:]
     lst.append(data)
     return lst

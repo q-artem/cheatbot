@@ -10,7 +10,7 @@ from configs import *
 import global_variables
 from config_reader import config
 from utils import get_value_from_id, debug, create_inline_button
-from functions import service_block, set_watch, send_cheats, set_settings, dev_block, send_hi_message
+from functions import service_block, set_watch, send_cheats, set_settings, dev_block, send_hi_message, set_settings_lv2
 
 bot = Bot(token=config.bot_token.get_secret_value(), parse_mode="HTML")
 
@@ -36,7 +36,7 @@ async def main(bot_lc1):  # Запуск процесса поллинга но�
 @dp.message(Command("start"))
 async def cmd_start(message: types.Message):
     if await get_value_from_id(message.from_user.id) is None:  # если первый раз - дисклеймер
-        await message.answer(disclaimer, reply_markup=await create_inline_button(
+        await message.answer(DISCLAIMER, reply_markup=await create_inline_button(
             "Я согласен и беру ответственность на себя", "agreement_with_the_disclaimer"))
     else:
         await send_hi_message(message, False)
@@ -55,10 +55,9 @@ async def send_hi_message_handler(callback: types.CallbackQuery):
 
 @dp.callback_query(F.data == "cansel_sending")
 async def stop_send_messages(callback: types.CallbackQuery):
-    if global_variables.states[callback.from_user.id] == IN_SENDING_MESSAGES or \
-            global_variables.states[callback.from_user.id] == IN_PREPARING_TO_SENDING:
+    if global_variables.states[callback.from_user.id] == IN_SENDING_MESSAGES_STATE or \
+            global_variables.states[callback.from_user.id] == IN_PREPARING_TO_SENDING_STATE:
         global_variables.states[callback.from_user.id] = IN_SLEEP_STATE
-        print(callback.from_user.id, global_variables.states[callback.from_user.id])
         await callback.message.answer("Отправка сообщений отменена")
     else:
         await callback.message.answer("Сообщения сейчас не отправляются")
@@ -76,7 +75,7 @@ async def message_handler(message: types.Message):
     if await dev_block(message):
         return True
 
-    if global_variables.states[message.from_user.id] == IN_SENDING_MESSAGES:  # если работаем
+    if global_variables.states[message.from_user.id] == IN_SENDING_MESSAGES_STATE:  # если работаем
         return True
 
     if await service_block(message):
@@ -86,6 +85,9 @@ async def message_handler(message: types.Message):
         return True
 
     if await set_settings(message):
+        return True
+
+    if await set_settings_lv2(message):
         return True
 
     if await send_cheats(message):
