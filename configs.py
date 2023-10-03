@@ -20,6 +20,8 @@ IN_SET_SEPARATOR_MESSAGES_STATE = 21  # 3                     третий ур�
 IN_SET_TIME_BETWEEN_MESSAGES_STATE = 22
 IN_SET_TIME_BEFORE_SENDING_STATE = 23
 
+
+SPLIT_BY_NEW_LINE_TEXT = "[Разбивать на сообщения по переводу строки]"
 keyboards = {IN_SLEEP_STATE: [
     [
         types.KeyboardButton(text=CHOOSING_WATCH_TEXT),
@@ -45,6 +47,8 @@ keyboards = {IN_SLEEP_STATE: [
         types.KeyboardButton(text=";;;"),
         types.KeyboardButton(text="==="),
         types.KeyboardButton(text=">>>"),
+    ], [
+        types.KeyboardButton(text=SPLIT_BY_NEW_LINE_TEXT),
     ]
 ], IN_SET_TIME_BEFORE_SENDING_STATE: [
     [

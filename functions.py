@@ -10,7 +10,7 @@ from configs import CHOOSING_WATCH_TEXT, IN_CHOICE_WATCH_STATE, IN_SLEEP_STATE, 
     MAX_QUANTITY_MESSAGES, SET_SEPARATOR_MESSAGES_TEXT, IN_SET_SEPARATOR_MESSAGES_STATE, MAX_LEN_SEP, \
     IN_SET_TIME_BETWEEN_MESSAGES_STATE, SET_TIME_BETWEEN_MESSAGES_TEXT, MIN_TIME_BETWEEN_MESSAGES, \
     MAX_TIME_BETWEEN_MESSAGES, SET_TIME_BEFORE_SENDING_TEXT, IN_SET_TIME_BEFORE_SENDING_STATE, \
-    MIN_TIME_BEFORE_MESSAGES, MAX_TIME_BEFORE_MESSAGES
+    MIN_TIME_BEFORE_MESSAGES, MAX_TIME_BEFORE_MESSAGES, SPLIT_BY_NEW_LINE_TEXT
 from utils import update_keyboard, get_value_from_id, write_value_from_id, cut_into_messages, debug, \
     create_inline_button, add_user, enter_bd_request
 
@@ -145,10 +145,13 @@ async def set_settings_lv2(message: types.Message):
         return False
 
     if global_variables.states[message.from_user.id] == IN_SET_SEPARATOR_MESSAGES_STATE:
-        await write_value_from_id(message.from_user.id, "separator", message.text[:MAX_LEN_SEP].replace("\n", ""))
+        if message.text == SPLIT_BY_NEW_LINE_TEXT:
+            await write_value_from_id(message.from_user.id, "separator", "\n")
+        else:
+            await write_value_from_id(message.from_user.id, "separator", message.text[:MAX_LEN_SEP].replace("\n", ""))
         global_variables.states[message.from_user.id] = IN_SETTINGS_STATE
-        await message.answer(f'Готово! Разделитель текста изменён на '
-                             f'"{await get_value_from_id(message.from_user.id, fields="separator")}"',
+        await message.answer('Готово! Разделитель текста изменён на "{}"'.format((await get_value_from_id(
+            message.from_user.id, fields="separator")).replace("\n", "[новая строка]")),
                              reply_markup=await update_keyboard(message))
         return True
 
