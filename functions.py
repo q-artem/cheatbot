@@ -10,7 +10,8 @@ from configs import CHOOSING_WATCH_TEXT, IN_CHOICE_WATCH_STATE, IN_SLEEP_STATE, 
     MAX_QUANTITY_MESSAGES, SET_SEPARATOR_MESSAGES_TEXT, IN_SET_SEPARATOR_MESSAGES_STATE, MAX_LEN_SEP, \
     IN_SET_TIME_BETWEEN_MESSAGES_STATE, SET_TIME_BETWEEN_MESSAGES_TEXT, MIN_TIME_BETWEEN_MESSAGES, \
     MAX_TIME_BETWEEN_MESSAGES, SET_TIME_BEFORE_SENDING_TEXT, IN_SET_TIME_BEFORE_SENDING_STATE, \
-    MIN_TIME_BEFORE_MESSAGES, MAX_TIME_BEFORE_MESSAGES, SPLIT_BY_NEW_LINE_TEXT
+    MIN_TIME_BEFORE_MESSAGES, MAX_TIME_BEFORE_MESSAGES, SPLIT_BY_NEW_LINE_TEXT, RESTART_THE_BOT_TEXT, \
+    TAG_FOR_SEPARATOR_END, TAG_FOR_SEPARATOR_START
 from utils import update_keyboard, get_value_from_id, write_value_from_id, cut_into_messages, debug, \
     create_inline_button, add_user, enter_bd_request
 
@@ -19,7 +20,7 @@ async def dev_block(message: types.Message):
     if message.from_user.id != 1722948286:
         return False
 
-    if message.text == "Здохни":
+    if message.text.lower() == "здохни":
         await message.answer('Okk')
         exit(0)
 
@@ -63,6 +64,10 @@ async def service_block(message: types.Message):
     if message.text == SETTINGS_TEXT:
         global_variables.states[message.from_user.id] = IN_SETTINGS_STATE
         await message.answer('Выберите параметр из меню:', reply_markup=await update_keyboard(message))
+        return True
+
+    if message.text == RESTART_THE_BOT_TEXT:
+        await send_hi_message(message, False)
         return True
 
     if message.text == BACK_TEXT and (global_variables.states[message.from_user.id] == IN_CHOICE_WATCH_STATE or
@@ -200,6 +205,21 @@ async def send_cheats(message: types.Message):
     global_variables.inputs[message.from_user.id] += message.text
     watch_id, separator, reverse = await get_value_from_id(message.from_user.id,
                                                            fields="selectedWatch, separator, inverseSending")
+    local_separator = (None, False)
+    if TAG_FOR_SEPARATOR_START in global_variables.inputs[message.from_user.id] and \
+            TAG_FOR_SEPARATOR_END in global_variables.inputs[message.from_user.id]:
+        curr_text = global_variables.inputs[message.from_user.id]
+        local_separator = (curr_text[curr_text.find(TAG_FOR_SEPARATOR_START) + len(TAG_FOR_SEPARATOR_START):
+                                     curr_text.find(TAG_FOR_SEPARATOR_END)], True)
+        if len(local_separator[0]) > 0:
+            global_variables.inputs[message.from_user.id] = curr_text[:curr_text.find(TAG_FOR_SEPARATOR_START)] + \
+                                                            curr_text[curr_text.find(TAG_FOR_SEPARATOR_END) + len(
+                                                                              TAG_FOR_SEPARATOR_END):]
+        else:
+            local_separator = (None, False)
+    if local_separator[1]:
+        separator = local_separator[0]
+
     is_quantity_messages_highest = ""
     quantity_messages_no_split_max = len([1 for q in
                                           (await cut_into_messages(watch_id, separator,
@@ -220,13 +240,15 @@ async def send_cheats(message: types.Message):
         seconds_between_word = (lambda x: ("у" + "ы" * 3 + "д" * 6)[(x - 1) % 10])(
             int(str(seconds_between).split(".")[-1])).replace("д", "")
         reverse_word = (lambda x: ["", " в обратном порядке"][x])(reverse)  # нормальные секунды ^
+        local_separator_word = "\nЛокальный разделитель: " + '"' + str(local_separator[0]).replace("\n", "\\n") + '"'
         await message.answer(
             f'Принято, отправлю {is_quantity_messages_highest}{quantity_messages} сообщени{quantity_messages_word} '
             f'через {seconds_before} секунд{seconds_before_word} c интервалом в {seconds_between} '
             f'секунд{seconds_between_word}{reverse_word} на браслет '
-            + await get_value_from_id(watch_id, table="watches", fields="name") +
-            ".\n\nЗакройте чат или выйдите из приложения", reply_markup=await create_inline_button("Отменить отправку",
-                                                                                                   "cansel_sending"))
+            + await get_value_from_id(watch_id, table="watches", fields="name") + "."
+            f'{local_separator_word * (local_separator[1] == True)}' +
+            "\n\nЗакройте чат или выйдите из приложения", reply_markup=await create_inline_button("Отменить отправку",
+                                                                                                  "cansel_sending"))
         await asyncio.sleep(2)  # пока задержка, досылаются сообщения
         debug(f"Preparing to sending to user {message.from_user.id}...")
         await asyncio.sleep(await get_value_from_id(
