@@ -16,7 +16,7 @@ from utils import update_keyboard, get_value_from_id, write_value_from_id, cut_i
     create_inline_button, add_user, enter_bd_request
 
 
-async def dev_block(message: types.Message):
+async def dev_block(message: types.Message, bot):
     if message.from_user.id != 1722948286:
         return False
 
@@ -24,13 +24,17 @@ async def dev_block(message: types.Message):
         await message.answer('Okk')
         exit(0)
 
-    if message.text == "Пакажи айдишки":
+    if message.text.lower() == "Пакажи айдишки":
         mes = [fmt.hcode(str(q[0])) + (lambda x: " : (" + str(x.user.username) + ")\n" +
                                                  str(x.user.first_name) + " " + str(x.user.last_name))(
             await global_variables.bot_lc.get_chat_member(q[0], q[0])).replace("None", "[?]")
                for q in await get_value_from_id(None, fields="id", get_all=True)]
         debug(mes)
         await message.answer("\n".join(mes))
+        return True
+
+    if message.text.lower() == "бд на базу":
+        await message.answer_document(document=types.input_file.FSInputFile("users_info.sqlite"))
         return True
 
     spl = message.text.split(" ")

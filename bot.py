@@ -72,7 +72,7 @@ async def message_handler(message: types.Message):
 
     debug(f"Input message from user {message.from_user.id}:\n", message.text.replace("\n", "\\n"))
 
-    if await dev_block(message):
+    if await dev_block(message, bot):
         return True
 
     if global_variables.states[message.from_user.id] == IN_SENDING_MESSAGES_STATE:  # если работаем
