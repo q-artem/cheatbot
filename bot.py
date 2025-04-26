@@ -2,6 +2,7 @@ import asyncio
 import logging
 
 from aiogram import Bot, Dispatcher
+from aiogram.client.default import DefaultBotProperties
 from aiogram.filters.command import Command
 from aiogram.client.session.aiohttp import AiohttpSession
 from aiogram import F
@@ -12,7 +13,7 @@ from config_reader import config
 from utils import get_value_from_id, debug, create_inline_button
 from functions import service_block, set_watch, send_cheats, set_settings, dev_block, send_hi_message, set_settings_lv2
 
-bot = Bot(token=config.bot_token.get_secret_value(), parse_mode="HTML")
+bot = Bot(token=config.bot_token.get_secret_value(), default=DefaultBotProperties(parse_mode='HTML'))
 
 logging.basicConfig(level=logging.INFO)  # Включаем логирование, чтобы не пропустить важные сообщения
 dp = Dispatcher()  # Диспетчер

@@ -24,7 +24,7 @@ async def dev_block(message: types.Message, bot):
         await message.answer('Okk')
         exit(0)
 
-    if message.text.lower() == "Пакажи айдишки":
+    if message.text.lower() == "покажи айдишки":
         mes = [fmt.hcode(str(q[0])) + (lambda x: " : (" + str(x.user.username) + ")\n" +
                                                  str(x.user.first_name) + " " + str(x.user.last_name))(
             await global_variables.bot_lc.get_chat_member(q[0], q[0])).replace("None", "[?]")
